@@ -133,7 +133,7 @@ def start_streaming():
     raw_kafka_df = spark \
         .readStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", "localhost:9092") \
+        .option("kafka.bootstrap.servers", "kafka:29092") \
         .option("subscribe", "raw_emails") \
         .option("startingOffsets", "earliest") \
         .load()
@@ -200,7 +200,7 @@ def start_streaming():
                         dbname=settings.POSTGRES_DB,
                         user=settings.POSTGRES_USER,
                         password=settings.POSTGRES_PASSWORD,
-                        host=settings.POSTGRES_HOST,
+                        host="postgres-db",
                         port=settings.POSTGRES_PORT
                     )
                     cursor = conn.cursor()

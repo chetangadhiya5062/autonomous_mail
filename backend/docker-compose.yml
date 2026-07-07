@@ -19,9 +19,9 @@ services:
     env_file:
       - .env 
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-user} # Reads from .env file, with a default
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-aethermail}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432" # Exposes Postgres to your local machine for development
     volumes:
@@ -78,21 +78,60 @@ services:
       "
     
   # 5. Spark Master Node
+  # spark-master:
+  #   image: apache/spark:3.5.1
+  #   container_name: spark-master
+  #   ports:
+  #     - "8080:8080" # Spark Web UI
+  #     - "7077:7077" # Spark Master port
+  #   command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master
+
+  # 5. Spark Master Node
   spark-master:
-    image: apache/spark:3.5.1
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    image: aethermail-spark:latest
     container_name: spark-master
+
     ports:
-      - "8080:8080" # Spark Web UI
-      - "7077:7077" # Spark Master port
-    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master
+      - "8080:8080"
+      - "7077:7077"
+
+    volumes:
+      - ./:/app
+
+    working_dir: /app
+
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.master.Master
+      --host spark-master
 
   # 6. Spark Worker Node
+  # spark-worker:
+  #   image: apache/spark:3.5.1
+  #   container_name: spark-worker
+  #   depends_on:
+  #     - spark-master
+  #   command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    # 6. Spark Worker Node
   spark-worker:
-    image: apache/spark:3.5.1
+    image: aethermail-spark:latest
     container_name: spark-worker
+
     depends_on:
       - spark-master
-    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+    volumes:
+      - ./:/app
+
+    working_dir: /app
+
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
 
 # Named volumes for data persistence
 volumes:

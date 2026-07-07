@@ -19,14 +19,16 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 # We build the Google Client config dynamically from our .env variables
 # This saves us from needing a hardcoded client_secrets.json file in production
-CLIENT_CONFIG = {
-    "web": {
-        "client_id": settings.GOOGLE_CLIENT_ID,
-        "client_secret": settings.GOOGLE_CLIENT_SECRET,
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-    }
-}
+with open("client_secret.json", "r", encoding="utf-8") as f:
+    CLIENT_CONFIG = json.load(f)
+# CLIENT_CONFIG = {
+#     "web": {
+#         "client_id": settings.GOOGLE_CLIENT_ID,
+#         "client_secret": settings.GOOGLE_CLIENT_SECRET,
+#         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+#         "token_uri": "https://oauth2.googleapis.com/token",
+#     }
+# }
 
 # The URL Google will redirect to after the user clicks "Allow"
 # We will create this endpoint in the next step
@@ -87,7 +89,19 @@ def exchange_code_and_save_tokens(db: Session, code: str, user_id: str):
     flow.redirect_uri = REDIRECT_URI
 
     # 3. Swap the code, passing the verifier!
-    flow.fetch_token(code=code, code_verifier=verifier)
+    try:
+        flow.fetch_token(
+            code=code,
+            code_verifier=verifier
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print("\n================ GOOGLE ERROR ================\n")
+        print(type(e))
+        print(e)
+        print("\n==============================================\n")
+        raise
     creds = flow.credentials
 
     # 4. Update the database with real tokens and clear the verifier

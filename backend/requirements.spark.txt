@@ -1,0 +1,15 @@
+pyspark
+kafka-python
+psycopg2-binary
+qdrant-client
+google-api-python-client
+google-auth
+google-auth-oauthlib
+python-dotenv
+requests
+python-dateutil
+cryptography
+pydantic
+pydantic-settings
+sqlalchemy
+PyMuPDF
