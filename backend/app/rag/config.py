@@ -12,6 +12,7 @@ CHUNK_OVERLAP = 150       # characters
 
 MIN_CHUNK_SIZE = 250
 
+UPLOAD_BATCH_SIZE = 50
 # -------------------------------
 # Retrieval
 # -------------------------------

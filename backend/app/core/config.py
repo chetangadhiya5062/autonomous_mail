@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     # AI Config
     GEMINI_API_KEY: str
+    EMBEDDING_MODEL: str = "models/gemini-embedding-001"
     
     HDFS_ENCRYPTION_KEY: str
 
