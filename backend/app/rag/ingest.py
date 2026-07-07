@@ -62,7 +62,7 @@ def main():
 
     total_batches = (len(chunks) + UPLOAD_BATCH_SIZE - 1) // UPLOAD_BATCH_SIZE
 
-    START_BATCH = 20  # Change this when resuming
+    START_BATCH = 1  # Change this when resuming
 
     for batch_number, chunk_batch in enumerate(
         batch(chunks, UPLOAD_BATCH_SIZE),

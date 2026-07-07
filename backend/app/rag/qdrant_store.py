@@ -12,24 +12,49 @@ from app.core.config import settings
 from app.rag.config import QDRANT_COLLECTION
 
 
+# class QdrantStore:
+
+#     def __init__(
+#         self,
+#         # collection_name: str = "benefits_documents",
+#         # collection_name: str = settings.QDRANT_COLLECTION,
+#         collection_name: str = QDRANT_COLLECTION,
+#         # vector_size: int = 3072,
+#         vector_size: int = 384,
+#     ):
+
+#         self.collection_name = collection_name
+
+#         self.client = QdrantClient(
+#             host=settings.QDRANT_HOST,
+#             port=settings.QDRANT_PORT,
+#         )
+
+#         self.vector_size = vector_size
+
+# from app.rag.providers.sentence_transformer_embeddings import (
+#     SentenceTransformerEmbeddingProvider,
+# )
+
+from app.rag.providers.factory import get_embedding_provider
 class QdrantStore:
 
     def __init__(
         self,
-        # collection_name: str = "benefits_documents",
-        # collection_name: str = settings.QDRANT_COLLECTION,
         collection_name: str = QDRANT_COLLECTION,
-        vector_size: int = 3072,
     ):
 
         self.collection_name = collection_name
+
+        # self.embedding_provider = SentenceTransformerEmbeddingProvider()
+        self.embedding_provider = get_embedding_provider()
+
+        self.vector_size = self.embedding_provider.dimension
 
         self.client = QdrantClient(
             host=settings.QDRANT_HOST,
             port=settings.QDRANT_PORT,
         )
-
-        self.vector_size = vector_size
 
     def create_collection(self):
 

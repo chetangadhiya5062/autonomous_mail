@@ -3,14 +3,17 @@ from typing import List
 from qdrant_client.models import PointStruct
 
 from app.rag.document import Document
-from app.rag.providers.gemini_embeddings import GeminiEmbeddingProvider
-
+# from app.rag.providers.sentence_transformer_embeddings import (
+#     SentenceTransformerEmbeddingProvider,
+# )
+from app.rag.providers.factory import get_embedding_provider
 
 class Embedder:
 
     def __init__(self):
 
-        self.embedding_provider = GeminiEmbeddingProvider()
+        # self.embedding_provider = SentenceTransformerEmbeddingProvider()
+        self.embedding_provider = get_embedding_provider()
 
     def embed_document(
         self,

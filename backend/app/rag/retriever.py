@@ -1,15 +1,14 @@
 from typing import List
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import Filter
 
 from app.core.config import settings
-from app.rag.config import (
-    TOP_K,
-    QDRANT_COLLECTION,
-)
-from app.rag.providers.gemini_embeddings import GeminiEmbeddingProvider
-
+from app.rag.config import TOP_K, QDRANT_COLLECTION
+from app.rag.document import Document
+# from app.rag.providers.sentence_transformer_embeddings import (
+#     SentenceTransformerEmbeddingProvider,
+# )
+from app.rag.providers.factory import get_embedding_provider
 
 class Retriever:
 
@@ -20,21 +19,48 @@ class Retriever:
             port=settings.QDRANT_PORT,
         )
 
-        self.embedding_provider = GeminiEmbeddingProvider()
+        # self.embedding_provider = SentenceTransformerEmbeddingProvider()
+        self.embedding_provider = get_embedding_provider()
 
     def search(
         self,
         query: str,
         top_k: int = TOP_K,
-    ):
+    ) -> List[Document]:
 
-        vector = self.embedding_provider.embed(query)
+        query_vector = self.embedding_provider.embed(query)
 
-        results = self.client.search(
+        # hits = self.client.search(
+        #     collection_name=QDRANT_COLLECTION,
+        #     query_vector=query_vector,
+        #     limit=top_k,
+        # )
+
+        response = self.client.query_points(
             collection_name=QDRANT_COLLECTION,
-            query_vector=vector,
+            query=query_vector,
             limit=top_k,
-            query_filter=None,
         )
 
-        return results
+        hits = response.points
+
+        documents = []
+
+        for hit in hits:
+
+            payload = hit.payload
+
+            metadata = dict(payload)
+
+            content = metadata.pop("content")
+
+            metadata["score"] = hit.score
+
+            documents.append(
+                Document(
+                    content=content,
+                    metadata=metadata,
+                )
+            )
+
+        return documents
