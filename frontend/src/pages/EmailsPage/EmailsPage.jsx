@@ -5,13 +5,27 @@ import { CONFIG } from '../../config';
 import s from './EmailsPage.module.css';
 
 // ── Helpers ─────────────────────────────────────────────
-function formatDate(ts) {
-  if (!ts) return '';
+// function formatDate(ts) {
+//   if (!ts) return '';
+//   try {
+//     return new Date(parseInt(ts)).toLocaleDateString('en-US', {
+//       month: 'short', day: 'numeric',
+//     });
+//   } catch { return ''; }
+// }
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+
   try {
-    return new Date(parseInt(ts)).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric',
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
-  } catch { return ''; }
+  } catch {
+    return '';
+  }
 }
 
 function getHeader(headers = [], name) {
@@ -73,9 +87,12 @@ function InboxTab({ authFetch }) {
         <div className={s.emailList}>
           {emails.map((email) => {
             const headers = email.payload?.headers || [];
-            const from    = getHeader(headers, 'From') || email.sender_email || 'Unknown';
-            const subject = getHeader(headers, 'Subject') || email.subject || '(no subject)';
-            const date    = formatDate(email.internalDate) || email.received_at || '';
+            // const from    = getHeader(headers, 'From') || email.sender_email || 'Unknown';
+            const from = email.sender || getHeader(headers, 'From') || 'Unknown';
+            // const subject = getHeader(headers, 'Subject') || email.subject || '(no subject)';
+            const subject = email.subject || '(no subject)';
+            // const date    = formatDate(email.internalDate) || email.received_at || '';
+            const date = email.date_received ? formatDate(email.date_received): '';
             return (
               <div key={email.id || email.gmail_id} className={s.emailCard}>
                 <div className={s.emailDot} />
