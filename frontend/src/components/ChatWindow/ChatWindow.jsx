@@ -105,8 +105,7 @@ function MessageRow({ msg, user }) {
         {
           !msg.isError &&
           msg.role === "ai" &&
-          typeof msg.confidence === "number" && 
-          msg.sources?.length > 0(
+          typeof msg.confidence === "number" && msg.sources?.length > 0(
             <div className={s.confidence}>
               <span className={s.confidenceLabel}>
                 Confidence
