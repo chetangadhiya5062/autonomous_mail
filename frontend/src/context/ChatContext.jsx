@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { CONFIG } from '../config';
+import { ASSISTANTS } from "../config/assistants";
 
 const ChatContext = createContext(null);
 
@@ -24,6 +25,9 @@ export function ChatProvider({ children }) {
   const [conversations, setConversations] = useState(loadConvs);
   const [activeId,      setActiveId]      = useState(null);
   const [thinking,      setThinking]      = useState(false);
+  // const [chatMode, setChatMode] = useState("benefits");
+  const [assistant, setAssistant] = useState("agent");
+  const assistantConfig = ASSISTANTS[assistant];
 
   const activeConv = conversations.find(c => c.id === activeId) || null;
 
@@ -34,15 +38,33 @@ export function ChatProvider({ children }) {
 
   const startNewChat = useCallback(() => {
     const id = genId();
-    const conv = { id, title: 'New conversation', messages: [] };
+    // const conv = { id, title: 'New conversation', messages: [] };
+    const conv = {
+        id,
+        assistant,
+        title: 'New conversation',
+        messages: []
+    };
     persistConvs([conv, ...conversations]);
     setActiveId(id);
     return id;
-  }, [conversations, persistConvs]);
+  }, [
+      conversations,
+      persistConvs,
+      assistant,
+  ]);
 
   const switchConv = useCallback((id) => {
-    setActiveId(id);
-  }, []);
+
+      const conv = conversations.find(c => c.id === id);
+
+      if (conv?.assistant) {
+          setAssistant(conv.assistant);
+      }
+
+      setActiveId(id);
+
+  }, [conversations]);
 
   const sendMessage = useCallback(async (prompt) => {
     if (!prompt.trim() || thinking) return;
@@ -53,11 +75,18 @@ export function ChatProvider({ children }) {
 
     if (!convId || !updatedConvs.find(c => c.id === convId)) {
       const id = genId();
-      const newConv = { id, title: prompt.slice(0, 48), messages: [] };
+      // const newConv = { id, title: prompt.slice(0, 48), messages: [] };
+      const newConv = {
+          id,
+          assistant,
+          title: prompt.slice(0, 48),
+          messages: []
+      };
       updatedConvs = [newConv, ...updatedConvs];
       convId = id;
       setActiveId(id);
     }
+    
 
     // Add user message
     const userMsg = { id: genId(), role: 'user', content: prompt };
@@ -74,25 +103,94 @@ export function ChatProvider({ children }) {
     setThinking(true);
 
     try {
-      const res = await authFetch(`${CONFIG.API_BASE}/agent/execute`, {
-        method: 'POST',
-        body: JSON.stringify({ prompt }),
-      });
 
-      let aiContent;
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || `Server error (${res.status})`);
-      }
-      const data = await res.json();
-      aiContent = data.agent_response || 'No response received.';
+        let payload;
 
-      const aiMsg = { id: genId(), role: 'ai', content: aiContent };
-      updatedConvs = updatedConvs.map(c =>
-        c.id === convId
-          ? { ...c, messages: [...c.messages, aiMsg] }
-          : c
-      );
+        switch (assistant) {
+
+            case "benefits":
+                payload = {
+                    question: prompt,
+                };
+                break;
+
+            case "agent":
+            default:
+                payload = {
+                    prompt,
+                };
+                break;
+        }
+
+        const res = await authFetch(
+            `${CONFIG.API_BASE}${assistantConfig.endpoint}`,
+            {
+                method: "POST",
+                body: JSON.stringify(payload),
+            }
+        );
+
+        if (!res.ok) {
+
+            const err = await res.json().catch(() => ({}));
+
+            throw new Error(
+                err.detail || `Server error (${res.status})`
+            );
+        }
+
+        const data = await res.json();
+
+        let aiMessage;
+
+        switch (assistant) {
+
+            case "benefits":
+
+                aiMessage = {
+
+                    id: genId(),
+
+                    role: "ai",
+
+                    content: data.answer,
+
+                    confidence: data.confidence,
+
+                    sources: data.sources || [],
+
+                };
+
+                break;
+
+            case "agent":
+            default:
+
+                aiMessage = {
+
+                    id: genId(),
+
+                    role: "ai",
+
+                    content:
+                        data.agent_response ||
+                        "No response received.",
+
+                };
+
+                break;
+        }
+
+        updatedConvs = updatedConvs.map(c =>
+            c.id === convId
+                ? {
+                      ...c,
+                      messages: [...c.messages, aiMessage],
+                  }
+                : c
+        );
+
+
     } catch (err) {
       const errMsg = {
         id: genId(),
@@ -109,13 +207,37 @@ export function ChatProvider({ children }) {
       persistConvs(updatedConvs);
       setThinking(false);
     }
-  }, [activeId, conversations, authFetch, thinking, persistConvs]);
+  }, [
+      activeId,
+      conversations,
+      authFetch,
+      thinking,
+      persistConvs,
+      assistant,
+      assistantConfig,
+  ]);
 
   return (
-    <ChatContext.Provider value={{
-      conversations, activeConv, activeId,
-      thinking, startNewChat, switchConv, sendMessage,
-    }}>
+    <ChatContext.Provider
+        value={{
+            conversations,
+            activeConv,
+            activeId,
+
+            thinking,
+
+            // chatMode,
+            // setChatMode,
+
+            startNewChat,
+            switchConv,
+            sendMessage,
+
+            assistant,
+            setAssistant,
+            assistantConfig,
+        }}
+    >
       {children}
     </ChatContext.Provider>
   );

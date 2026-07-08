@@ -3,9 +3,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { CONFIG } from '../../config';
 import s from './Topbar.module.css';
+import { useChat } from "../../context/ChatContext";
+import { ASSISTANTS } from "../../config/assistants";
 
 export default function Topbar({ onToggleSidebar }) {
   const { user, authFetch, authorizeGmail } = useAuth();
+  const {
+      assistant,
+      setAssistant,
+      assistantConfig,
+  } = useChat();
   const [gmailStatus, setGmailStatus] = useState('checking'); // 'checking' | 'connected' | 'disconnected'
   const [authorizingGmail, setAuthorizingGmail] = useState(false);
   const [gmailError, setGmailError] = useState('');
@@ -52,7 +59,41 @@ export default function Topbar({ onToggleSidebar }) {
         </svg>
       </button>
 
-      <span className={s.title}>AetherMail</span>
+      {/* <span className={s.title}>AetherMail</span> */}
+      <div className={s.assistantSelector}>
+
+          <span className={s.title}>
+              AetherMail
+          </span>
+
+          <select
+
+              value={assistant}
+
+              onChange={(e) =>
+                  setAssistant(e.target.value)
+              }
+
+              className={s.assistantDropdown}
+
+          >
+
+              {
+                  Object.values(ASSISTANTS).map(item => (
+
+                      <option
+                          key={item.id}
+                          value={item.id}
+                      >
+                          {item.icon} {item.name}
+                      </option>
+
+                  ))
+              }
+
+          </select>
+
+      </div>
 
       <div className={s.spacer} />
 

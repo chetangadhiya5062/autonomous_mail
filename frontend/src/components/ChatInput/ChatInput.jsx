@@ -4,7 +4,12 @@ import { useChat } from '../../context/ChatContext';
 import s from './ChatInput.module.css';
 
 export default function ChatInput({ prefill, onPrefillConsumed }) {
-  const { sendMessage, thinking } = useChat();
+  // const { sendMessage, thinking } = useChat();
+  const {
+      sendMessage,
+      thinking,
+      assistantConfig,
+  } = useChat();
   const [value, setValue] = useState('');
   const textareaRef = useRef(null);
 
@@ -54,7 +59,12 @@ export default function ChatInput({ prefill, onPrefillConsumed }) {
           ref={textareaRef}
           id="prompt-input"
           className={s.textarea}
-          placeholder="Ask AetherMail anything about your inbox…"
+          // placeholder="Ask AetherMail anything about your inbox…"
+          // placeholder={assistantConfig?.inputPlaceholder}
+          placeholder={
+              assistantConfig?.inputPlaceholder ??
+              "Ask AetherMail..."
+          }
           rows={1}
           value={value}
           onChange={handleChange}

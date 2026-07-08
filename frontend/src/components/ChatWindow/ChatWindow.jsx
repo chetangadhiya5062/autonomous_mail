@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
 import s from './ChatWindow.module.css';
 
+
 // ── helpers ──────────────────────────────────────────────
 function formatText(text) {
   // Very lightweight markdown: bold, italic, inline code
@@ -16,14 +17,17 @@ function formatText(text) {
 }
 
 // ── WelcomeState ─────────────────────────────────────────
-const SUGGESTIONS = [
-  { icon: '🔍', text: 'Find all emails from my boss this week and summarize them' },
-  { icon: '🗑️', text: 'Delete all promotional emails from last month' },
-  { icon: '✍️', text: 'Draft a polite reply to the last email from HR' },
-  { icon: '📂', text: 'Create a label "Project Alpha" and move related emails there' },
-];
 
-function WelcomeState({ onSuggestion }) {
+// const SUGGESTIONS = [
+//   { icon: '🔍', text: 'Find all emails from my boss this week and summarize them' },
+//   { icon: '🗑️', text: 'Delete all promotional emails from last month' },
+//   { icon: '✍️', text: 'Draft a polite reply to the last email from HR' },
+//   { icon: '📂', text: 'Create a label "Project Alpha" and move related emails there' },
+// ];
+
+
+
+function WelcomeState({ assistantConfig, onSuggestion }) {
   return (
     <div className={s.welcome}>
       <div className={s.welcomeIcon}>
@@ -40,12 +44,18 @@ function WelcomeState({ onSuggestion }) {
           </defs>
         </svg>
       </div>
-      <h2 className={s.welcomeTitle}>How can I help with your inbox?</h2>
-      <p className={s.welcomeSubtitle}>
+      {/* <h2 className={s.welcomeTitle}>How can I help with your inbox?</h2> */}
+      <h2 className={s.welcomeTitle}>
+          {assistantConfig?.welcomeTitle}
+      </h2>
+      {/* <p className={s.welcomeSubtitle}>
         Ask me anything about your emails — I can search, organize, summarize, draft replies, and manage your inbox at scale.
+      </p> */}
+      <p className={s.welcomeSubtitle}>
+          {assistantConfig.subtitle}
       </p>
       <div className={s.grid}>
-        {SUGGESTIONS.map((sg) => (
+        {assistantConfig.suggestions?.map((sg) => (
           <button key={sg.text} className={s.card} onClick={() => onSuggestion(sg.text)}>
             <span className={s.cardIcon}>{sg.icon}</span>
             <span>{sg.text}</span>
@@ -90,6 +100,57 @@ function MessageRow({ msg, user }) {
           className={s.text}
           dangerouslySetInnerHTML={{ __html: formatText(msg.content) }}
         />
+
+        {/* Confidence */}
+        {
+          !msg.isError &&
+          msg.role === "ai" &&
+          typeof msg.confidence === "number" && 
+          msg.sources?.length > 0(
+            <div className={s.confidence}>
+              <span className={s.confidenceLabel}>
+                Confidence
+              </span>
+
+              <span className={s.confidenceValue}>
+                {(msg.confidence * 100).toFixed(1)}%
+              </span>
+            </div>
+          )
+        }
+
+        {/* Sources */}
+        {
+          !msg.isError &&
+          msg.role === "ai" &&
+          msg.sources &&
+          msg.sources.length > 0 && (
+            <div className={s.sources}>
+
+              <div className={s.sourcesTitle}>
+                Sources
+              </div>
+
+              {
+                msg.sources.map((source, index) => (
+
+                  <div
+                    key={index}
+                    className={s.sourceCard}
+                  >
+                    📄 {source.document}
+
+                    <span>
+                      Page {source.page}
+                    </span>
+                  </div>
+
+                ))
+              }
+
+            </div>
+          )
+        }
       </div>
     </div>
   );
@@ -98,11 +159,17 @@ function MessageRow({ msg, user }) {
 // ── ChatWindow (main export) ──────────────────────────────
 export default function ChatWindow({ onSuggestion }) {
   const { user } = useAuth();
-  const { activeConv, thinking } = useChat();
+  // const { activeConv, thinking } = useChat();
+  const {
+      activeConv,
+      thinking,
+      assistantConfig,
+  } = useChat();
   const bottomRef = useRef(null);
 
   const messages = activeConv?.messages || [];
   const isEmpty  = messages.length === 0 && !thinking;
+
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -112,7 +179,10 @@ export default function ChatWindow({ onSuggestion }) {
   return (
     <div className={s.wrapper}>
       {isEmpty ? (
-        <WelcomeState onSuggestion={onSuggestion} />
+        <WelcomeState
+            assistantConfig={assistantConfig}
+            onSuggestion={onSuggestion}
+        />
       ) : (
         <div className={s.messages}>
           {messages.map(msg => (

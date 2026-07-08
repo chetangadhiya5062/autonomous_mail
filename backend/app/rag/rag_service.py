@@ -1,3 +1,4 @@
+# rag_service.py
 from app.rag.retriever import Retriever
 from app.rag.config import MIN_CONFIDENCE
 from app.rag.context_builder import ContextBuilder
